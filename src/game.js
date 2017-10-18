@@ -11,7 +11,7 @@ export default class Game {
         this.canvas.gameHeigth = 800;
         this.canvas.width = this.canvas.gameWidth = 800;
         this.canvas.height = this.canvas.gameHeigth + 20;
-        this.gameLoopSpeed = 5;
+        this.gameLoopSpeed = 20;
         this.paddleLoopSpeed = 5;
         this.gameOverSound = new Audio("gameOver.wav");
         document.body.appendChild(this.canvas);
@@ -48,7 +48,8 @@ export default class Game {
         //Create game objects
         this.ship = new Ship(this);
         this.scoreBoard = new ScoreBoard(0, this.canvas.gameHeigth, this.canvas.width, this.canvas.height - this.canvas.gameHeigth);
-
+        this.projectiles = [];
+        this.newProjectiles = [];
         // Start the game loop
         this.gameLoopInterval = null;
 
@@ -69,6 +70,11 @@ export default class Game {
                     break;
             }
             return;
+        }
+        if (event.key === "p") {
+            clearInterval(this.gameLoopInterval);
+            this.gameLoopInterval = null;
+            this.gameState.status = "paused";
         }
         switch (event.key) {
 
@@ -140,7 +146,10 @@ export default class Game {
 
     update() {
         if (this.gameState.status === "running") {
-            this.ship.update()
+            this.ship.update();
+            this.newProjectiles = [];
+            this.projectiles.forEach((item) => item.update());
+            this.projectiles = this.newProjectiles;
         }
     }
 
@@ -150,6 +159,7 @@ export default class Game {
         this.ctx.strokeStyle = "white";
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
         this.ship.render(this.ctx);
+        this.projectiles.forEach((item) => item.render(this.ctx));
         this.scoreBoard.render(this.ctx, this.gameState);
         this.scoreBoard.renderGameOver(this.ctx, this.gameState)
     }
@@ -159,5 +169,9 @@ export default class Game {
         this.render();
     }
 
-
+    static clamp(value, lborder, rborder) {
+        if (value >= lborder && value <= rborder) return value;
+        if (value >= rborder) return rborder;
+        if (value <= lborder) return lborder;
+    }
 }

@@ -1,11 +1,14 @@
+import Projectile from "./projectile";
+
 export default class Ship {
     constructor(game) {
         this.canvas = game.canvas;
-        this.position = {x: this.canvas.width/2, y: this.canvas.height/2, dirX: 0, dirY: 1};
+        this.position = {x: this.canvas.width / 2, y: this.canvas.height / 2, direction: Math.PI / 2};
         this.speedVector = {x: 0, y: 0};
         this.game = game;
         this.thrusters = false;
-        this.thrustersForce = 0.01;
+        this.thrustersForce = 1;
+        this.maxSpeed = 5;
 
         this.update = this.update.bind(this);
         this.render = this.render.bind(this);
@@ -15,25 +18,22 @@ export default class Ship {
     }
 
     shoot() {
-        return null;
+        this.game.projectiles.push(new Projectile(this.game,this.position.x,this.position.y,this.position.direction));
     }
 
 
     steer(direction) {
-        var beta = null;
+        let beta = null;
         if (direction === "left") {
-            beta = Math.PI / 10240;
+            beta = Math.PI / 16;
 
         } else if (direction === "right") {
-            beta = Math.PI / 10240;
+            beta = -Math.PI / 16;
 
         }
-        let x =  this.position.dirX;
-        let y =  this.position.dirY;
-        this.position.dirX = Math.cos(beta) * x - Math.sin(beta)* y;
-        this.position.dirY = Math.sin(beta) * y + Math.cos(beta)* x;
-        console.log(this.position);
+        this.position.direction += beta;
     }
+
     update() {
         if (this.game.keyBoard["left"]) {
             this.steer("left");
@@ -43,12 +43,17 @@ export default class Ship {
 
         if (this.game.keyBoard["shoot"])
             this.shoot();
+        let oldTx = this.speedVector.x;
+        let oldTy = this.speedVector.y;
 
         if (this.thrusters) {
-            this.speedVector.x += this.position.dirX * this.thrustersForce;
-            this.speedVector.y += this.position.dirY * this.thrustersForce;
+            this.speedVector.x += Math.cos(this.position.direction) * this.thrustersForce;
+            this.speedVector.y += Math.sin(this.position.direction) * this.thrustersForce;
         }
-
+        // if (Math.pow(this.speedVector.x, 2) + Math.pow(this.speedVector.y, 2) > Math.pow(this.maxSpeed, 2)) {
+        //     this.speedVector.x = oldTx;
+        //     this.speedVector.y = oldTy;
+        // }
 
         if (this.position.x + this.speedVector.x > this.canvas.gameWidth) {
             this.position.x = this.canvas.gameWidth;
@@ -61,16 +66,16 @@ export default class Ship {
         else
             this.position.x += this.speedVector.x;
 
-        if (this.position.y + this.speedVector.y > this.canvas.gameHeigth) {
+        if (this.position.y - this.speedVector.y > this.canvas.gameHeigth) {
             this.position.y = this.canvas.gameHeigth;
             this.speedVector.y = 0;
         }
-        else if (this.position.y + this.speedVector.y < 0) {
+        else if (this.position.y - this.speedVector.y < 0) {
             this.position.y = 0;
             this.speedVector.y = 0;
         }
         else
-            this.position.y += this.speedVector.y;
+            this.position.y -= this.speedVector.y;
 
     }
 
@@ -79,7 +84,7 @@ export default class Ship {
         ctx.strokeStyle = "white";
         ctx.beginPath();
         ctx.translate(this.position.x, this.position.y);
-        ctx.rotate(Math.atan2(this.position.dirX, this.position.dirY));
+        ctx.rotate(-this.position.direction+Math.PI/2);
         ctx.moveTo(0, -8);
         ctx.lineTo(4, 8);
         ctx.lineTo(-4, 8);
