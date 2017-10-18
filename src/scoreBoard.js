@@ -24,7 +24,7 @@ export default class ScoreBoard {
     renderGameOver(ctx, gameState) {
         if (gameState.status !== "over") return;
         ctx.save();
-        ctx.strokeStyle = 'black';
+        ctx.strokeStyle = 'white';
         ctx.strokeRect(this.x, this.y, this.width, this.height);
         ctx.fillStyle = "black";
         ctx.font = '40px sans-serif';

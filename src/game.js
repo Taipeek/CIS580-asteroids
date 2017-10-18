@@ -1,9 +1,4 @@
-// game.js
-
-
-import Paddle from "./paddle";
-import Bricks from "./bricks";
-import Ball from "./ball";
+import Ship from "./ship";
 import ScoreBoard from "./scoreBoard";
 
 export default class Game {
@@ -13,35 +8,31 @@ export default class Game {
 
         // Create the screen buffer canvas
         this.canvas = document.createElement('canvas');
-        this.canvas.gameHeigth = 550;
-        this.canvas.gameWidth = 800;
-        this.canvas.width = 800;
+        this.canvas.gameHeigth = 800;
+        this.canvas.width = this.canvas.gameWidth = 800;
         this.canvas.height = this.canvas.gameHeigth + 20;
-        this.gameLoopSpeed = function () {
-            return 10 - (this.gameState.level);
-        };
+        this.gameLoopSpeed = 5;
         this.paddleLoopSpeed = 5;
         this.gameOverSound = new Audio("gameOver.wav");
         document.body.appendChild(this.canvas);
         this.ctx = this.canvas.getContext('2d');
+        this.keyBoard = [];
 
 
         // Bind class functions
         this.handleKeyDow = this.handleKeyDown.bind(this);
         this.handleKeyUp = this.handleKeyUp.bind(this);
-        this.clearPaddleLoop = this.clearPaddleLoop.bind(this);
         this.newGame = this.newGame.bind(this);
         this.update = this.update.bind(this);
         this.render = this.render.bind(this);
         this.gameLoop = this.gameLoop.bind(this);
-        this.paddleLoop = this.paddleLoop.bind(this);
         window.onkeydown = this.handleKeyDow;
         window.onkeyup = this.handleKeyUp;
 
         //initial render
         this.newGame();
         setTimeout(() => {
-            //just waiting to load image
+            //just waiting to load images
             this.render();
         }, 500);
 
@@ -55,14 +46,11 @@ export default class Game {
             level: 1
         };
         //Create game objects
-        this.paddle = new Paddle(this.canvas.gameWidth, this.canvas.gameHeigth);
-        this.bricks = new Bricks(this.canvas.gameWidth, this.canvas.gameHeigth);
-        this.ball = new Ball(this);
+        this.ship = new Ship(this);
         this.scoreBoard = new ScoreBoard(0, this.canvas.gameHeigth, this.canvas.width, this.canvas.height - this.canvas.gameHeigth);
 
         // Start the game loop
         this.gameLoopInterval = null;
-        this.paddleLoopInterval = null;
 
     }
 
@@ -75,33 +63,30 @@ export default class Game {
                         this.newGame();
                         return;
                     }
-                    this.ball.shoot();
-                    this.gameLoopInterval = setInterval(this.gameLoop, this.gameLoopSpeed());
+                    this.ship.shoot();
+                    this.gameLoopInterval = setInterval(this.gameLoop, this.gameLoopSpeed);
                     this.gameState.status = "running";
                     break;
             }
             return;
         }
         switch (event.key) {
+
+            case 'w':
+            case 'ArrowUp':
+                this.ship.thrusters = true;
+                break;
             case 'a':
             case 'ArrowLeft':
-                if (this.paddle.cancelLeft || this.paddle.direction === "left") return;
-                if (this.paddle.direction === "right") {
-                    this.paddle.cancelRight = true;
-                }
-                this.paddle.direction = "left";
-                if (this.paddleLoopInterval === null)
-                    this.paddleLoopInterval = setInterval(this.paddleLoop, this.paddleLoopSpeed);
+                this.keyBoard["left"] = true;
                 break;
             case 'd':
             case 'ArrowRight':
-                if (this.paddle.cancelRight || this.paddle.direction === "right") return;
-                if (this.paddle.direction === "left") {
-                    this.paddle.cancelLeft = true;
-                }
-                this.paddle.direction = "right";
-                if (this.paddleLoopInterval === null)
-                    this.paddleLoopInterval = setInterval(this.paddleLoop, this.paddleLoopSpeed);
+                this.keyBoard["right"] = true;
+                break;
+            case ' ':
+            case 'Space':
+                this.keyBoard["shoot"] = true;
                 break;
         }
     }
@@ -109,36 +94,32 @@ export default class Game {
     handleKeyUp(event) {
         event.preventDefault();
         switch (event.key) {
+
+            case 'w':
+            case 'ArrowUp':
+                this.ship.thrusters = false;
+                break;
             case 'a':
             case 'ArrowLeft':
-                if (this.paddle.direction === "left")
-                    this.clearPaddleLoop();
-                this.paddle.cancelLeft = false;
+                this.keyBoard["left"] = false;
                 break;
             case 'd':
             case 'ArrowRight':
-                if (this.paddle.direction === "right")
-                    this.clearPaddleLoop();
-                this.paddle.cancelRight = false;
+                this.keyBoard["right"] = false;
+                break;
+            case ' ':
+            case 'Space':
+                this.keyBoard["shoot"] = false;
                 break;
         }
-        this.render();
-    }
-
-    clearPaddleLoop() {
-        this.paddle.direction = "none";
-        clearInterval(this.paddleLoopInterval);
-        this.paddleLoopInterval = null;
     }
 
     gameOver() {
         if (--this.gameState.lives >= 1) {
-            this.paddle = new Paddle(this.canvas.gameWidth, this.canvas.gameHeigth);
-            this.ball = new Ball(this);
+            this.ship = new Ship(this.canvas.gameWidth, this.canvas.gameHeigth);
             this.gameState.status = "standby";
             clearInterval(this.gameLoopInterval);
-            clearInterval(this.paddleLoopInterval);
-            this.gameLoopInterval = this.paddleLoopInterval = null;
+            this.gameLoopInterval = null;
             return;
         }
         this.gameState.status = "over";
@@ -151,30 +132,24 @@ export default class Game {
 
 
     nextLevel() {
-        this.bricks = new Bricks(this.canvas.gameWidth, this.canvas.gameHeigth);
-        this.ball.bricks = this.bricks;
         this.gameState.level++;
         clearInterval(this.gameLoopInterval);
-        this.gameLoopInterval = setInterval(this.gameLoop, this.gameLoopSpeed());
+        this.gameLoopInterval = setInterval(this.gameLoop, this.gameLoopSpeed);
     }
 
 
     update() {
         if (this.gameState.status === "running") {
-            this.ball.update();
-            if (this.bricks.brickCount === 0)
-                this.nextLevel();
+            this.ship.update()
         }
     }
 
 
     render() {
-        this.ctx.fillStyle = "white";
-        this.ctx.strokeStyle = "black";
+        this.ctx.fillStyle = "black";
+        this.ctx.strokeStyle = "white";
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-        this.paddle.render(this.ctx);
-        this.bricks.render(this.ctx);
-        this.ball.render(this.ctx);
+        this.ship.render(this.ctx);
         this.scoreBoard.render(this.ctx, this.gameState);
         this.scoreBoard.renderGameOver(this.ctx, this.gameState)
     }
@@ -184,8 +159,5 @@ export default class Game {
         this.render();
     }
 
-    paddleLoop() {
-        this.paddle.update();
-    }
 
 }
