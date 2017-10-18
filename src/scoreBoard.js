@@ -6,13 +6,14 @@ export default class ScoreBoard {
         this.height = height;
         this.render = this.render.bind(this);
         this.renderGameOver = this.renderGameOver.bind(this);
+        this.renderPause = this.renderPause.bind(this);
     }
 
     render(ctx, gameState) {
         ctx.save();
-        ctx.strokeStyle = 'black';
+        ctx.strokeStyle = 'white';
         ctx.strokeRect(this.x, this.y, this.width, this.height);
-        ctx.fillStyle = "black";
+        ctx.fillStyle = "white";
         ctx.font = '18px sans-serif';
         ctx.fontStyle = 'bold';
         ctx.fillText("Score: " + gameState.score, this.x, this.y + 18);
@@ -31,7 +32,19 @@ export default class ScoreBoard {
         ctx.fontStyle = 'bold';
         ctx.fillText("Game Over!", this.x + 1 / 4 * this.width, this.y - 240);
         ctx.fillText("Score: " + gameState.score, this.x + 1 / 4 * this.width, this.y - 190);
-        ctx.fillText("Press Spacebar to start a new game", this.x + 1 / 8 * this.width, this.y - 100);
+        ctx.fillText("Press space to start a new game", this.x + 1 / 8 * this.width, this.y - 100);
+        ctx.restore();
+    }
+    renderPause(ctx, gameState) {
+        if (gameState.status !== "paused") return;
+        ctx.save();
+        ctx.strokeStyle = 'white';
+        ctx.strokeRect(this.x, this.y, this.width, this.height);
+        ctx.fillStyle = "white";
+        ctx.font = '40px sans-serif';
+        ctx.fontStyle = 'bold';
+        ctx.fillText("Paused", this.x + 1 / 4 * this.width, this.y - 240);
+        ctx.fillText("Press space to resume", this.x + 1 / 8 * this.width, this.y - 100);
         ctx.restore();
     }
 }

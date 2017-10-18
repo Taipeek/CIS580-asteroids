@@ -7,8 +7,10 @@ export default class Ship {
         this.speedVector = {x: 0, y: 0};
         this.game = game;
         this.thrusters = false;
-        this.thrustersForce = 1;
-        this.maxSpeed = 5;
+        this.thrustersForce = 0.5;
+        this.maxSpeed = 8;
+        this.lastShot = Date.now();
+        this.shotInterval = 500;
 
         this.update = this.update.bind(this);
         this.render = this.render.bind(this);
@@ -18,17 +20,21 @@ export default class Ship {
     }
 
     shoot() {
-        this.game.projectiles.push(new Projectile(this.game,this.position.x,this.position.y,this.position.direction));
+        let now = Date.now();
+        if (now - this.lastShot >= this.shotInterval) {
+            this.game.projectiles.push(new Projectile(this.game, this.position.x, this.position.y, this.position.direction, this.speedVector));
+            this.lastShot = now;
+        }
     }
 
 
     steer(direction) {
         let beta = null;
         if (direction === "left") {
-            beta = Math.PI / 16;
+            beta = Math.PI / 32;
 
         } else if (direction === "right") {
-            beta = -Math.PI / 16;
+            beta = -Math.PI / 32;
 
         }
         this.position.direction += beta;
@@ -43,36 +49,34 @@ export default class Ship {
 
         if (this.game.keyBoard["shoot"])
             this.shoot();
-        let oldTx = this.speedVector.x;
-        let oldTy = this.speedVector.y;
+
 
         if (this.thrusters) {
             this.speedVector.x += Math.cos(this.position.direction) * this.thrustersForce;
             this.speedVector.y += Math.sin(this.position.direction) * this.thrustersForce;
         }
-        // if (Math.pow(this.speedVector.x, 2) + Math.pow(this.speedVector.y, 2) > Math.pow(this.maxSpeed, 2)) {
-        //     this.speedVector.x = oldTx;
-        //     this.speedVector.y = oldTy;
-        // }
+        let xx = Math.pow(this.speedVector.x, 2);
+        let yy = Math.pow(this.speedVector.y, 2);
+        if (xx + yy > Math.pow(this.maxSpeed, 2)) {
+            let norm = Math.sqrt(xx + yy);
+            this.speedVector.x = (this.speedVector.x / norm) * this.maxSpeed;
+            this.speedVector.y = (this.speedVector.y / norm) * this.maxSpeed;
+        }
 
         if (this.position.x + this.speedVector.x > this.canvas.gameWidth) {
-            this.position.x = this.canvas.gameWidth;
-            this.speedVector.x = 0;
+            this.position.x =  0;
         }
         else if (this.position.x + this.speedVector.x < 0) {
-            this.position.x = 0;
-            this.speedVector.x = 0;
+            this.position.x = this.canvas.gameWidth;
         }
         else
             this.position.x += this.speedVector.x;
 
-        if (this.position.y - this.speedVector.y > this.canvas.gameHeigth) {
-            this.position.y = this.canvas.gameHeigth;
-            this.speedVector.y = 0;
+        if (this.position.y - this.speedVector.y > this.canvas.gameHeight) {
+            this.position.y =  0;
         }
         else if (this.position.y - this.speedVector.y < 0) {
-            this.position.y = 0;
-            this.speedVector.y = 0;
+            this.position.y = this.canvas.gameHeight;
         }
         else
             this.position.y -= this.speedVector.y;
@@ -84,7 +88,7 @@ export default class Ship {
         ctx.strokeStyle = "white";
         ctx.beginPath();
         ctx.translate(this.position.x, this.position.y);
-        ctx.rotate(-this.position.direction+Math.PI/2);
+        ctx.rotate(-this.position.direction + Math.PI / 2);
         ctx.moveTo(0, -8);
         ctx.lineTo(4, 8);
         ctx.lineTo(-4, 8);

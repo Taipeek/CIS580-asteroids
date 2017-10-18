@@ -1,5 +1,6 @@
 import Ship from "./ship";
 import ScoreBoard from "./scoreBoard";
+import Asteroid from "./asteroid";
 
 export default class Game {
     constructor() {
@@ -8,11 +9,14 @@ export default class Game {
 
         // Create the screen buffer canvas
         this.canvas = document.createElement('canvas');
-        this.canvas.gameHeigth = 800;
+        this.canvas.gameHeight = 800;
         this.canvas.width = this.canvas.gameWidth = 800;
-        this.canvas.height = this.canvas.gameHeigth + 20;
+        this.canvas.height = this.canvas.gameHeight + 20;
         this.gameLoopSpeed = 20;
-        this.paddleLoopSpeed = 5;
+        this.minAsteroidSpeed = 1;
+        this.minAsteroidSize = 5;
+        this.maxAsteroidSpeed = 10;
+        this.maxAsteroidSize = 30;
         this.gameOverSound = new Audio("gameOver.wav");
         document.body.appendChild(this.canvas);
         this.ctx = this.canvas.getContext('2d');
@@ -47,9 +51,24 @@ export default class Game {
         };
         //Create game objects
         this.ship = new Ship(this);
-        this.scoreBoard = new ScoreBoard(0, this.canvas.gameHeigth, this.canvas.width, this.canvas.height - this.canvas.gameHeigth);
+        this.scoreBoard = new ScoreBoard(0, this.canvas.gameHeight, this.canvas.width, this.canvas.height - this.canvas.gameHeight);
         this.projectiles = [];
         this.newProjectiles = [];
+        this.asteroids = [];
+        this.asteroidsAxisX = [];
+        this.asteroidsAxisY = [];
+        for (let i = 0; i++; i < 15) {
+            let x = Math.random() * this.canvas.gameWidth;
+            let y = Math.random() * this.canvas.gameHeight;
+            let vx = Math.max(Math.random() * this.maxAsteroidSpeed, this.minAsteroidSpeed);
+            let vy = Math.max(Math.random() * this.maxAsteroidSpeed, this.minAsteroidSpeed);
+            let r = Math.floor(Math.max(Math.random() * this.maxAsteroidSize, this.minAsteroidSize));
+            let dir = Math.random() * 2 * Math.PI;
+            this.asteroids[i] = new Asteroid(this, i, x, y, r, dir, vx, vy);
+            this.asteroidsAxisX.push(this.asteroids[i]);
+            this.asteroidsAxisY.push(this.asteroids[i]);
+
+        }
         // Start the game loop
         this.gameLoopInterval = null;
 
@@ -75,6 +94,8 @@ export default class Game {
             clearInterval(this.gameLoopInterval);
             this.gameLoopInterval = null;
             this.gameState.status = "paused";
+            console.log(this.asteroids)
+            this.render();
         }
         switch (event.key) {
 
@@ -122,7 +143,7 @@ export default class Game {
 
     gameOver() {
         if (--this.gameState.lives >= 1) {
-            this.ship = new Ship(this.canvas.gameWidth, this.canvas.gameHeigth);
+            this.ship = new Ship(this.canvas.gameWidth, this.canvas.gameHeight);
             this.gameState.status = "standby";
             clearInterval(this.gameLoopInterval);
             this.gameLoopInterval = null;
@@ -150,6 +171,7 @@ export default class Game {
             this.newProjectiles = [];
             this.projectiles.forEach((item) => item.update());
             this.projectiles = this.newProjectiles;
+            this.asteroids.forEach((item) => item.update());
         }
     }
 
@@ -160,8 +182,10 @@ export default class Game {
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
         this.ship.render(this.ctx);
         this.projectiles.forEach((item) => item.render(this.ctx));
+        this.asteroids.forEach((item) => item.render(this.ctx));
         this.scoreBoard.render(this.ctx, this.gameState);
-        this.scoreBoard.renderGameOver(this.ctx, this.gameState)
+        this.scoreBoard.renderGameOver(this.ctx, this.gameState);
+        this.scoreBoard.renderPause(this.ctx, this.gameState);
     }
 
     gameLoop() {
