@@ -30,6 +30,7 @@ export default class Game {
         this.update = this.update.bind(this);
         this.render = this.render.bind(this);
         this.gameLoop = this.gameLoop.bind(this);
+        this.checkCollisions = this.checkCollisions.bind(this);
         window.onkeydown = this.handleKeyDow;
         window.onkeyup = this.handleKeyUp;
 
@@ -54,24 +55,35 @@ export default class Game {
         this.scoreBoard = new ScoreBoard(0, this.canvas.gameHeight, this.canvas.width, this.canvas.height - this.canvas.gameHeight);
         this.projectiles = [];
         this.newProjectiles = [];
-        this.asteroids = [];
+        this.asteroids = new Map();
         this.asteroidsAxisX = [];
         this.asteroidsAxisY = [];
-        for (let i = 0; i<15; i++) {
+        for (let i = 0; i < 25; i++) {
             let x = Math.random() * this.canvas.gameWidth;
             let y = Math.random() * this.canvas.gameHeight;
             let vx = Math.max(Math.random() * this.maxAsteroidSpeed, this.minAsteroidSpeed);
             let vy = Math.max(Math.random() * this.maxAsteroidSpeed, this.minAsteroidSpeed);
             let r = Math.floor(Math.max(Math.random() * this.maxAsteroidSize, this.minAsteroidSize));
             let dir = Math.random() * 2 * Math.PI;
-            this.asteroids[i] = new Asteroid(this, i, x, y, r, dir, vx, vy);
+            this.asteroids.set(i, new Asteroid(this, i, x, y, r, dir, vx, vy));
             this.asteroidsAxisX.push(this.asteroids[i]);
             this.asteroidsAxisY.push(this.asteroids[i]);
+
 
         }
         // Start the game loop
         this.gameLoopInterval = null;
 
+    }
+
+    checkCollisions() {
+        this.asteroids.forEach((asteroidA, keyA) => {
+            this.asteroids.forEach((asteroidB, keyB) => {
+                if (keyB > keyA && Asteroid.areColliding(asteroidA, asteroidB)) {
+                    Asteroid.handleCollision(asteroidA, asteroidB);
+                }
+            });
+        });
     }
 
     handleKeyDown(event) {
@@ -166,11 +178,32 @@ export default class Game {
 
     update() {
         if (this.gameState.status === "running") {
-            this.ship.update();
+            let destroyedAsteroids = [];
             this.newProjectiles = [];
-            this.projectiles.forEach((item) => item.update());
+            this.checkCollisions();
+            this.projectiles.forEach((projectile) => {
+                let hit = false;
+                this.asteroids.forEach((asteroid) => {
+                    if (asteroid.isShot(projectile)) {
+                        destroyedAsteroids.push(asteroid.id);
+                        hit = true;
+                    }
+                });
+                if (!hit) {
+                    this.newProjectiles.push(projectile);
+                    console.log(projectile);
+                }
+            });
             this.projectiles = this.newProjectiles;
-            this.asteroids.forEach((item) => item.update());
+            destroyedAsteroids.forEach((id) => this.asteroids.delete(id));
+            this.ship.update();
+
+            this.asteroids.forEach((asteroid) => asteroid.update());
+            this.projectiles.forEach((projectile) => projectile.update());
+
+            this.newProjectiles = [];
+            this.projectiles = this.newProjectiles;
+
         }
     }
 
@@ -196,5 +229,24 @@ export default class Game {
         if (value >= lborder && value <= rborder) return value;
         if (value >= rborder) return rborder;
         if (value <= lborder) return lborder;
+    }
+
+    static rotateVector(vector, angle) {
+        return {
+            x: vector.x * Math.cos(angle) - vector.y * Math.sin(angle),
+            y: vector.x * Math.sin(angle) + vector.y * Math.cos(angle)
+        }
+    }
+
+    static normalizeVector(vector) {
+        let norm = Math.sqrt(vector.x * vector.x + vector.y * vector.y);
+        return {
+            x: vector.x / norm,
+            y: vector.y / norm
+        }
+    }
+
+    static magnitudeVector(vector) {
+        return Math.sqrt(vector.x * vector.x + vector.y * vector.y);
     }
 }

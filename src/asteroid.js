@@ -1,17 +1,20 @@
+import Game from "./game";
+
 export default class Asteroid {
-    constructor(game,id,x,y, radius, direction, vx, vy) {
+    constructor(game, id, x, y, radius, direction, vx, vy) {
         this.id = id;
         this.game = game;
         this.direction = direction;
         this.x = x;
         this.y = y;
-        this.vx = vx;
-        this.vy = vy;
+        this.velocity = {x: vx, y: vy};
         this.radius = radius;
 
 
         this.update = this.update.bind(this);
         this.render = this.render.bind(this);
+        this.isShot = this.isShot.bind(this);
+        this.split = this.split.bind(this);
     }
 
 
@@ -26,22 +29,64 @@ export default class Asteroid {
     }
 
     update() {
-        if (this.x + this.vx > this.game.canvas.gameWidth) {
-            this.x =  0;
+        if (this.x + this.velocity.x > this.game.canvas.gameWidth) {
+            this.x = 0;
         }
-        else if (this.x + this.vx < 0) {
+        else if (this.x + this.velocity.x < 0) {
             this.x = this.game.canvas.gameWidth;
         }
         else
-            this.x += this.vx;
+            this.x += this.velocity.x;
 
-        if (this.y - this.vy > this.game.canvas.gameHeight) {
-            this.y =  0;
+        if (this.y - this.velocity.y > this.game.canvas.gameHeight) {
+            this.y = 0;
         }
-        else if (this.y - this.vy < 0) {
+        else if (this.y - this.velocity.y < 0) {
             this.y = this.game.canvas.gameHeight;
         }
         else
-            this.y -= this.vy;
+            this.y -= this.velocity.y;
+    }
+
+    isShot(projectile){
+        return Math.pow(this.x-projectile.x,2) + Math.pow(this.y-projectile.y,2) < this.radius*this.radius;
+    }
+
+    split(){
+        if(this.radius>this.game.minAsteroidSize){
+            return null;
+            //return [new Asteroid(this.game,?,this),new Asteroid()];
+        }
+        return null;
+    }
+
+    static areColliding(a, b) {
+        return Math.pow(a.x - b.x, 2) + Math.pow(a.y - b.y, 2) < Math.pow(a.radius + b.radius, 2);
+
+    }
+
+    static handleCollision(a, b) {
+        let collisionVector = {
+            x: a.x - b.x,
+            y: a.y - b.y,
+        };
+        let collisionAngle = Math.atan2(collisionVector.x, collisionVector.y);
+        let overlap = a.radius + b.radius - Game.magnitudeVector(collisionVector);
+        collisionVector = Game.normalizeVector(collisionVector);
+        a.x += collisionVector.x * overlap / 2;
+        a.y += collisionVector.y * overlap / 2;
+        b.x -= collisionVector.x * overlap / 2;
+        b.y -= collisionVector.y * overlap / 2;
+
+        let newA = Game.rotateVector(a.velocity, collisionAngle);
+        let newB = Game.rotateVector(b.velocity, collisionAngle);
+        let tmp = newA.x;
+        newA.x = newB.x;
+        newB.x = tmp;
+        newA = Game.rotateVector(newA, -collisionAngle);
+        newB = Game.rotateVector(newB, -collisionAngle);
+        a.velocity = newA;
+        b.velocity = newB;
+
     }
 }

@@ -4,7 +4,7 @@ export default class Ship {
     constructor(game) {
         this.canvas = game.canvas;
         this.position = {x: this.canvas.width / 2, y: this.canvas.height / 2, direction: Math.PI / 2};
-        this.speedVector = {x: 0, y: 0};
+        this.velocity = {x: 0, y: 0};
         this.game = game;
         this.thrusters = false;
         this.thrustersForce = 0.5;
@@ -23,7 +23,7 @@ export default class Ship {
     shoot() {
         let now = Date.now();
         if (now - this.lastShot >= this.shotInterval) {
-            this.game.projectiles.push(new Projectile(this.game, this.position.x, this.position.y, this.position.direction, this.speedVector));
+            this.game.projectiles.push(new Projectile(this.game, this.position.x, this.position.y, this.position.direction, this.velocity));
             this.lastShot = now;
         }
     }
@@ -53,34 +53,34 @@ export default class Ship {
 
 
         if (this.thrusters) {
-            this.speedVector.x += Math.cos(this.position.direction) * this.thrustersForce;
-            this.speedVector.y += Math.sin(this.position.direction) * this.thrustersForce;
+            this.velocity.x += Math.cos(this.position.direction) * this.thrustersForce;
+            this.velocity.y += Math.sin(this.position.direction) * this.thrustersForce;
         }
-        let xx = Math.pow(this.speedVector.x, 2);
-        let yy = Math.pow(this.speedVector.y, 2);
+        let xx = Math.pow(this.velocity.x, 2);
+        let yy = Math.pow(this.velocity.y, 2);
         if (xx + yy > Math.pow(this.maxSpeed, 2)) {
             let norm = Math.sqrt(xx + yy);
-            this.speedVector.x = (this.speedVector.x / norm) * this.maxSpeed;
-            this.speedVector.y = (this.speedVector.y / norm) * this.maxSpeed;
+            this.velocity.x = (this.velocity.x / norm) * this.maxSpeed;
+            this.velocity.y = (this.velocity.y / norm) * this.maxSpeed;
         }
 
-        if (this.position.x + this.speedVector.x > this.canvas.gameWidth) {
+        if (this.position.x + this.velocity.x > this.canvas.gameWidth) {
             this.position.x =  0;
         }
-        else if (this.position.x + this.speedVector.x < 0) {
+        else if (this.position.x + this.velocity.x < 0) {
             this.position.x = this.canvas.gameWidth;
         }
         else
-            this.position.x += this.speedVector.x;
+            this.position.x += this.velocity.x;
 
-        if (this.position.y - this.speedVector.y > this.canvas.gameHeight) {
+        if (this.position.y - this.velocity.y > this.canvas.gameHeight) {
             this.position.y =  0;
         }
-        else if (this.position.y - this.speedVector.y < 0) {
+        else if (this.position.y - this.velocity.y < 0) {
             this.position.y = this.canvas.gameHeight;
         }
         else
-            this.position.y -= this.speedVector.y;
+            this.position.y -= this.velocity.y;
 
     }
 
