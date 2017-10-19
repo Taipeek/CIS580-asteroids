@@ -8,9 +8,10 @@ export default class Ship {
         this.game = game;
         this.thrusters = false;
         this.thrustersForce = 0.5;
-        this.maxSpeed = 8;
+        this.maxSpeed = 7;
         this.lastShot = Date.now();
-        this.shotInterval = 500;
+        this.shotInterval = 200;
+        this.directionShift = Math.PI / 24;
 
         this.update = this.update.bind(this);
         this.render = this.render.bind(this);
@@ -31,10 +32,10 @@ export default class Ship {
     steer(direction) {
         let beta = null;
         if (direction === "left") {
-            beta = Math.PI / 32;
+            beta = this.directionShift;
 
         } else if (direction === "right") {
-            beta = -Math.PI / 32;
+            beta = -this.directionShift;
 
         }
         this.position.direction += beta;

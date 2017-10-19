@@ -26,7 +26,22 @@ export default class Asteroid {
     }
 
     update() {
-        this.x+= this.vx;
-        this.y+= this.vy;
+        if (this.x + this.vx > this.game.canvas.gameWidth) {
+            this.x =  0;
+        }
+        else if (this.x + this.vx < 0) {
+            this.x = this.game.canvas.gameWidth;
+        }
+        else
+            this.x += this.vx;
+
+        if (this.y - this.vy > this.game.canvas.gameHeight) {
+            this.y =  0;
+        }
+        else if (this.y - this.vy < 0) {
+            this.y = this.game.canvas.gameHeight;
+        }
+        else
+            this.y -= this.vy;
     }
 }

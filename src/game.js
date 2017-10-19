@@ -15,8 +15,8 @@ export default class Game {
         this.gameLoopSpeed = 20;
         this.minAsteroidSpeed = 1;
         this.minAsteroidSize = 5;
-        this.maxAsteroidSpeed = 10;
-        this.maxAsteroidSize = 30;
+        this.maxAsteroidSpeed = 3;
+        this.maxAsteroidSize = 20;
         this.gameOverSound = new Audio("gameOver.wav");
         document.body.appendChild(this.canvas);
         this.ctx = this.canvas.getContext('2d');
@@ -57,7 +57,7 @@ export default class Game {
         this.asteroids = [];
         this.asteroidsAxisX = [];
         this.asteroidsAxisY = [];
-        for (let i = 0; i++; i < 15) {
+        for (let i = 0; i<15; i++) {
             let x = Math.random() * this.canvas.gameWidth;
             let y = Math.random() * this.canvas.gameHeight;
             let vx = Math.max(Math.random() * this.maxAsteroidSpeed, this.minAsteroidSpeed);
@@ -94,7 +94,6 @@ export default class Game {
             clearInterval(this.gameLoopInterval);
             this.gameLoopInterval = null;
             this.gameState.status = "paused";
-            console.log(this.asteroids)
             this.render();
         }
         switch (event.key) {
