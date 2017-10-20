@@ -55,9 +55,9 @@ export default class Asteroid {
     split() {
         if (this.radius > this.game.minAsteroidSize) {
             let ratio = Math.random();
-            while (ratio < 0.25) ratio = Math.random();
-            let r1 = Math.floor(ratio) * this.radius;
-            let r2 = Math.floor(1 - ratio) * this.radius;
+            while (ratio < 0.30 || ratio > 0.65) ratio = Math.random();
+            let r1 = Math.floor(ratio * this.radius);
+            let r2 = Math.floor((1 - ratio) * this.radius);
             let id1 = this.game.idGenerator.next().value;
             let id2 = this.game.idGenerator.next().value;
             let x1 = this.x;
@@ -69,9 +69,10 @@ export default class Asteroid {
             let vy1 = -this.velocity.y;
             let vy2 = this.velocity.y;
             let dir = Math.random() * 2 * Math.PI;
-//TODO
-            this.game.asteroids.set(id1, new Asteroid(this.game, id1, x1, y1, r1, dir, vx1, vy1));
-            this.game.asteroids.set(id2, new Asteroid(this.game, id2, x2, y2, r2, dir, vx2, vy2));
+            let a1 = new Asteroid(this.game, id1, x1, y1, r1, dir, vx1, vy1);
+            let a2 = new Asteroid(this.game, id2, x2, y2, r2, dir, vx2, vy2);
+            this.game.asteroids.set(id1, a1);
+            this.game.asteroids.set(id2, a2);
         }
     }
 

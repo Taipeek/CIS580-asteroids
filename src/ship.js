@@ -10,12 +10,12 @@ export default class Ship {
         this.thrustersForce = 0.2;
         this.maxSpeed = 7;
         this.lastShot = Date.now();
-        this.shotInterval = 200;
+        this.shotInterval = 150;
         this.directionShift = Math.PI / 24;
         this.width = 8;
         this.length = 16;
         this.invulnerability = 3000;
-        this.timeCrashed = 0;
+        this.timeInvulnerable = 0;
 
         this.update = this.update.bind(this);
         this.render = this.render.bind(this);
@@ -24,13 +24,14 @@ export default class Ship {
         this.isCrashed = this.isCrashed.bind(this);
         this.resetPosotion = this.resetPosotion.bind(this);
         this.isNear = this.isNear.bind(this);
+        this.warp = this.warp.bind(this);
 
     }
 
     isCrashed(asteroid) {
-        if(this.timeCrashed!==0){
-            if(Date.now()-this.timeCrashed>this.invulnerability){
-                this.timeCrashed = 0;
+        if(this.timeInvulnerable!==0){
+            if(Date.now()-this.timeInvulnerable>this.invulnerability){
+                this.timeInvulnerable = 0;
             }else{
                 return false;
             }
@@ -45,7 +46,7 @@ export default class Ship {
     }
 
     isNear(x,y){
-        return Math.pow(this.position.x-x,2) + Math.pow(this.position.y-this.length-y,2) < this.width*this.length;
+        return Math.pow(this.position.x-x,2) + Math.pow(this.position.y-this.length-y,2) < this.game.maxAsteroidSize*this.game.maxAsteroidSize;
     }
 
     shoot() {
@@ -53,6 +54,15 @@ export default class Ship {
         if (now - this.lastShot >= this.shotInterval) {
             this.game.projectiles.push(new Projectile(this.game, this.position.x, this.position.y, this.position.direction, this.velocity));
             this.lastShot = now;
+        }
+    }
+
+    warp() {
+        if (this.game.gameState.warpsLeft > 0 ) {
+            this.game.gameState.warpsLeft--;
+            this.timeInvulnerable = Date.now();
+            this.position.x = Math.random()*this.game.canvas.gameWidth;
+            this.position.y = Math.random()*this.game.canvas.gameHeight;
         }
     }
 
@@ -88,6 +98,9 @@ export default class Ship {
         if (this.thrusters) {
             this.velocity.x += Math.cos(this.position.direction) * this.thrustersForce;
             this.velocity.y += Math.sin(this.position.direction) * this.thrustersForce;
+        }else{
+            this.velocity.x *= 0.99;
+            this.velocity.y *= 0.99;
         }
         let xx = Math.pow(this.velocity.x, 2);
         let yy = Math.pow(this.velocity.y, 2);
@@ -119,9 +132,13 @@ export default class Ship {
 
     render(ctx) {
         ctx.save();
-        ctx.strokeStyle = "white";
-        if(this.timeCrashed!==0 && (Date.now() - this.timeCrashed) % 300 > 150)
+        ctx.strokeStyle = "blue";
+        ctx.fillStyle = "grey";
+        if(this.timeInvulnerable!==0 && (Date.now() - this.timeInvulnerable) % 300 > 150) {
             ctx.strokeStyle = "black";
+            ctx.fillStyle = "black";
+        }
+        ctx.lineWidth = 3;
         ctx.beginPath();
         ctx.translate(this.position.x, this.position.y);
         ctx.rotate(-this.position.direction + Math.PI / 2);
@@ -130,6 +147,7 @@ export default class Ship {
         ctx.lineTo(-this.width, this.length);
         ctx.closePath();
         ctx.stroke();
+        ctx.fill();
         ctx.restore();
     }
 }

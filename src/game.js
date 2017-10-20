@@ -14,9 +14,9 @@ export default class Game {
         this.canvas.height = this.canvas.gameHeight + 20;
         this.gameLoopSpeed = 20;
         this.minAsteroidSpeed = 1;
-        this.minAsteroidSize = 7;
+        this.minAsteroidSize = 15;
         this.maxAsteroidSpeed = 3;
-        this.maxAsteroidSize = 25;
+        this.maxAsteroidSize = 50;
         this.asteroidsPerLevel = 10;
         this.gameOverSound = new Audio("gameOver.wav");
         document.body.appendChild(this.canvas);
@@ -52,7 +52,6 @@ export default class Game {
             //just waiting to load images
             this.render();
         }, 500);
-
     }
 
     newGame() {
@@ -61,6 +60,7 @@ export default class Game {
             score: 0,
             lives: 3,
             level: 1,
+            warpsLeft:5,
             asteroidSize: ()=>{return this.asteroids.size}
         };
         //Create game objects
@@ -72,7 +72,6 @@ export default class Game {
         this.refillAsteroids();
         // Start the game loop
         this.gameLoopInterval = null;
-
     }
 
     checkCollisions() {
@@ -84,7 +83,7 @@ export default class Game {
             });
             if (this.ship.isCrashed(asteroidA)){
                 this.gameState.lives--;
-                this.ship.timeCrashed = Date.now();
+                this.ship.timeInvulnerable = Date.now();
                 this.ship.resetPosotion();
             }
         });
@@ -131,7 +130,13 @@ export default class Game {
             clearInterval(this.gameLoopInterval);
             this.gameLoopInterval = null;
             this.gameState.status = "paused";
+            console.log(this);
             this.render();
+            return;
+        }
+        if (event.key === "x" && this.gameState.status==="running") {
+           this.ship.warp();
+            return;
         }
         switch (event.key) {
 
@@ -240,6 +245,7 @@ export default class Game {
         this.scoreBoard.render(this.ctx, this.gameState);
         this.scoreBoard.renderGameOver(this.ctx, this.gameState);
         this.scoreBoard.renderPause(this.ctx, this.gameState);
+        this.scoreBoard.renderFirstGame(this.ctx, this.gameState);
     }
 
     gameLoop() {
