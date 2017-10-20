@@ -12,10 +12,13 @@ export default class Ship {
         this.lastShot = Date.now();
         this.shotInterval = 150;
         this.directionShift = Math.PI / 24;
-        this.width = 8;
-        this.length = 16;
+        this.width = 4;
+        this.length = 6;
         this.invulnerability = 3000;
         this.timeInvulnerable = 0;
+        this.shootSound = new Audio("shoot.wav");
+        this.crashSound = new Audio("shit.wav");
+
 
         this.update = this.update.bind(this);
         this.render = this.render.bind(this);
@@ -29,24 +32,24 @@ export default class Ship {
     }
 
     isCrashed(asteroid) {
-        if(this.timeInvulnerable!==0){
-            if(Date.now()-this.timeInvulnerable>this.invulnerability){
+        if (this.timeInvulnerable !== 0) {
+            if (Date.now() - this.timeInvulnerable > this.invulnerability) {
                 this.timeInvulnerable = 0;
-            }else{
+            } else {
                 return false;
             }
         }
-        if( Math.pow(this.position.x-asteroid.x,2) + Math.pow(this.position.y-this.length-asteroid.y,2) < asteroid.radius*asteroid.radius)
-            return true; // collision with front
-        if( Math.pow(this.position.x-4-asteroid.x,2) + Math.pow(this.position.y+this.length-asteroid.y,2) < asteroid.radius*asteroid.radius)
-            return true; // collision with back left
-        if( Math.pow(this.position.x+4-asteroid.x,2) + Math.pow(this.position.y+this.length-asteroid.y,2) < asteroid.radius*asteroid.radius)
-            return true; // collision with back right
+        if (Math.pow(this.position.x - asteroid.position.x, 2) + Math.pow(this.position.y - this.length - asteroid.position.y, 2) < asteroid.radius * asteroid.radius
+            || Math.pow(this.position.x - 4 - asteroid.position.x, 2) + Math.pow(this.position.y + this.length - asteroid.position.y, 2) < asteroid.radius * asteroid.radius
+            || Math.pow(this.position.x + 4 - asteroid.position.x, 2) + Math.pow(this.position.y + this.length - asteroid.position.y, 2) < asteroid.radius * asteroid.radius) {
+            this.crashSound.play();
+            return true;
+        }
         return false;
     }
 
-    isNear(x,y){
-        return Math.pow(this.position.x-x,2) + Math.pow(this.position.y-this.length-y,2) < this.game.maxAsteroidSize*this.game.maxAsteroidSize;
+    isNear(x, y) {
+        return Math.pow(this.position.x - x, 2) + Math.pow(this.position.y - this.length - y, 2) < this.game.maxAsteroidSize * this.game.maxAsteroidSize;
     }
 
     shoot() {
@@ -54,15 +57,16 @@ export default class Ship {
         if (now - this.lastShot >= this.shotInterval) {
             this.game.projectiles.push(new Projectile(this.game, this.position.x, this.position.y, this.position.direction, this.velocity));
             this.lastShot = now;
+            this.shootSound.play();
         }
     }
 
     warp() {
-        if (this.game.gameState.warpsLeft > 0 ) {
+        if (this.game.gameState.warpsLeft > 0) {
             this.game.gameState.warpsLeft--;
             this.timeInvulnerable = Date.now();
-            this.position.x = Math.random()*this.game.canvas.gameWidth;
-            this.position.y = Math.random()*this.game.canvas.gameHeight;
+            this.position.x = Math.random() * this.game.canvas.gameWidth;
+            this.position.y = Math.random() * this.game.canvas.gameHeight;
         }
     }
 
@@ -79,7 +83,7 @@ export default class Ship {
         this.position.direction += beta;
     }
 
-    resetPosotion(){
+    resetPosotion() {
         this.position = {x: this.canvas.width / 2, y: this.canvas.height / 2, direction: Math.PI / 2};
         this.velocity = {x: 0, y: 0};
     }
@@ -98,7 +102,7 @@ export default class Ship {
         if (this.thrusters) {
             this.velocity.x += Math.cos(this.position.direction) * this.thrustersForce;
             this.velocity.y += Math.sin(this.position.direction) * this.thrustersForce;
-        }else{
+        } else {
             this.velocity.x *= 0.99;
             this.velocity.y *= 0.99;
         }
@@ -134,7 +138,7 @@ export default class Ship {
         ctx.save();
         ctx.strokeStyle = "blue";
         ctx.fillStyle = "grey";
-        if(this.timeInvulnerable!==0 && (Date.now() - this.timeInvulnerable) % 300 > 150) {
+        if (this.timeInvulnerable !== 0 && (Date.now() - this.timeInvulnerable) % 300 > 150) {
             ctx.strokeStyle = "black";
             ctx.fillStyle = "black";
         }

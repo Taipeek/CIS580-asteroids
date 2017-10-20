@@ -5,11 +5,18 @@ export default class Asteroid {
         this.id = id;
         this.game = game;
         this.direction = direction;
-        this.x = x;
-        this.y = y;
+        this.position = {x:x,y:y};
         this.velocity = {x: vx, y: vy};
         this.radius = radius;
-
+        this.m = Math.PI*Math.PI*this.radius;
+        this.points = [];
+        this.collisionSound = new Audio("ahit.wav");
+        this.isShotSound = new Audio("mhit.wav");
+        for(let x = -radius ;x<=radius;x+=4){
+            let y1 = Math.sqrt(radius*radius-x*x);
+            let y2 = -y1;
+            this.points[x] = {y1:y1,y2:y2}
+        }
 
         this.update = this.update.bind(this);
         this.render = this.render.bind(this);
@@ -22,34 +29,48 @@ export default class Asteroid {
         ctx.save();
         ctx.strokeStyle = "white";
         ctx.fillStyle = "white";
+        ctx.translate(this.position.x,this.position.y);
         ctx.beginPath();
-        ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI, false);
+        ctx.moveTo(-this.radius,0);
+        this.points.forEach((ys,x)=>{
+            ctx.lineTo(x,ys.y1);
+        });
+        ctx.moveTo(-this.radius,0);
+        this.points.forEach((ys,x)=>{
+            ctx.lineTo(x,ys.y2);
+        });
+
+        // ctx.arc(this.position.x, this.position.y, this.radius, 0, 2 * Math.PI, false);
         ctx.fill();
         ctx.restore();
     }
 
     update() {
-        if (this.x + this.velocity.x > this.game.canvas.gameWidth) {
-            this.x = 0;
+        if (this.position.x + this.velocity.x > this.game.canvas.gameWidth) {
+            this.position.x = 0;
         }
-        else if (this.x + this.velocity.x < 0) {
-            this.x = this.game.canvas.gameWidth;
+        else if (this.position.x + this.velocity.x < 0) {
+            this.position.x = this.game.canvas.gameWidth;
         }
         else
-            this.x += this.velocity.x;
+            this.position.x += this.velocity.x;
 
-        if (this.y - this.velocity.y > this.game.canvas.gameHeight) {
-            this.y = 0;
+        if (this.position.y - this.velocity.y > this.game.canvas.gameHeight) {
+            this.position.y = 0;
         }
-        else if (this.y - this.velocity.y < 0) {
-            this.y = this.game.canvas.gameHeight;
+        else if (this.position.y - this.velocity.y < 0) {
+            this.position.y = this.game.canvas.gameHeight;
         }
         else
-            this.y -= this.velocity.y;
+            this.position.y -= this.velocity.y;
     }
 
     isShot(projectile) {
-        return Math.pow(this.x - projectile.x, 2) + Math.pow(this.y - projectile.y, 2) < this.radius * this.radius;
+        if(Math.pow(this.position.x - projectile.x, 2) + Math.pow(this.position.y - projectile.y, 2) < this.radius * this.radius){
+            this.isShotSound.play();
+            return true;
+        }
+        return false;
     }
 
     split() {
@@ -60,10 +81,10 @@ export default class Asteroid {
             let r2 = Math.floor((1 - ratio) * this.radius);
             let id1 = this.game.idGenerator.next().value;
             let id2 = this.game.idGenerator.next().value;
-            let x1 = this.x;
-            let x2 = this.x;
-            let y1 = this.y;
-            let y2 = this.y;
+            let x1 = this.position.x;
+            let x2 = this.position.x;
+            let y1 = this.position.y;
+            let y2 = this.position.y;
             let vx1 = this.velocity.x;
             let vx2 = -this.velocity.x;
             let vy1 = -this.velocity.y;
@@ -77,22 +98,34 @@ export default class Asteroid {
     }
 
     static areColliding(a, b) {
-        return Math.pow(a.x - b.x, 2) + Math.pow(a.y - b.y, 2) < Math.pow(a.radius + b.radius, 2);
-
+        if( Math.pow(a.position.x - b.position.x, 2) + Math.pow(a.position.y - b.position.y, 2) < Math.pow(a.radius + b.radius, 2)){
+            a.collisionSound.play();
+            return true;
+        }
+        return false;
     }
 
     static handleCollision(a, b) {
         let collisionVector = {
-            x: a.x - b.x,
-            y: a.y - b.y,
+            x: a.position.x - b.position.x,
+            y: a.position.y - b.position.y,
         };
         let collisionAngle = Math.atan2(collisionVector.x, collisionVector.y);
         let overlap = a.radius + b.radius - Game.magnitudeVector(collisionVector);
         collisionVector = Game.normalizeVector(collisionVector);
-        a.x += collisionVector.x * overlap / 2;
-        a.y += collisionVector.y * overlap / 2;
-        b.x -= collisionVector.x * overlap / 2;
-        b.y -= collisionVector.y * overlap / 2;
+        a.position.x += collisionVector.x * overlap / 2;
+        a.position.y += collisionVector.y * overlap / 2;
+        b.position.x -= collisionVector.x * overlap / 2;
+        b.position.y -= collisionVector.y * overlap / 2;
+
+        let va = Game.magnitudeVector(a.velocity);
+        let vb = Game.magnitudeVector(b.velocity);
+        let vamvb = Game.substractVectors(a.velocity,b.velocity);
+        let vbmva = Game.substractVectors(a.velocity,b.velocity);
+        let c1 = Game.substractVectors(a.position,b.position);
+        let c2 = Game.substractVectors(b.position,a.position);
+
+        let vaNew = va - (2*b.m/(a.m+b.m))*((vamvb.x*c1.x+vamvb.y*c1.y)/Game.squareVector(c1))*(a.position.x-b.position.x);
 
         let newA = Game.rotateVector(a.velocity, collisionAngle);
         let newB = Game.rotateVector(b.velocity, collisionAngle);
@@ -104,5 +137,23 @@ export default class Asteroid {
         a.velocity = newA;
         b.velocity = newB;
 
+        // let v1 = Game.magnitudeVector(a.velocity);
+        // let v2 = Game.magnitudeVector(b.velocity);
+        //
+        // a.velocity.x = (v1*Math.cos(a.direction-collisionAngle)*(a.m-b.m)
+        //     +(2*b.m*v2*Math.cos(b.direction-collisionAngle)))*Math.cos(collisionAngle)/(a.m+b.m)
+        //     +v1*Math.sin(a.direction-collisionAngle)*Math.cos(collisionAngle+Math.PI/2);
+        //
+        // a.velocity.y = (v1*Math.cos(a.direction-collisionAngle)*(a.m-b.m)
+        //     +(2*b.m*v2*Math.cos(b.direction-collisionAngle)))*Math.sin(collisionAngle)/(a.m+b.m)
+        //     +v1*Math.sin(a.direction-collisionAngle)*Math.sin(collisionAngle+Math.PI/2);
+        //
+        // b.velocity.x = (v2*Math.cos(b.direction-collisionAngle)*(b.m-a.m)
+        //     +(2*a.m*v1*Math.cos(a.direction-collisionAngle)))*Math.cos(collisionAngle)/(a.m+b.m)
+        //     +v2*Math.sin(b.direction-collisionAngle)*Math.cos(collisionAngle+Math.PI/2);
+        //
+        // b.velocity.y = (v2*Math.cos(b.direction-collisionAngle)*(b.m-a.m)
+        //     +(2*a.m*v1*Math.cos(a.direction-collisionAngle)))*Math.sin(collisionAngle)/(a.m+b.m)
+        //     +v2*Math.sin(b.direction-collisionAngle)*Math.sin(collisionAngle+Math.PI/2);
     }
 }

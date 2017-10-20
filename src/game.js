@@ -14,7 +14,7 @@ export default class Game {
         this.canvas.height = this.canvas.gameHeight + 20;
         this.gameLoopSpeed = 20;
         this.minAsteroidSpeed = 1;
-        this.minAsteroidSize = 15;
+        this.minAsteroidSize = 17;
         this.maxAsteroidSpeed = 3;
         this.maxAsteroidSize = 50;
         this.asteroidsPerLevel = 10;
@@ -272,6 +272,15 @@ export default class Game {
             x: vector.x / norm,
             y: vector.y / norm
         }
+    }
+    static substractVectors(a,b) {
+        return {
+            x: a.x - b.x,
+            y: a.y - b.y
+        }
+    }
+    static squareVector(a) {
+        return (a.x*a.x+a.y*a.y);
     }
 
     static magnitudeVector(vector) {
