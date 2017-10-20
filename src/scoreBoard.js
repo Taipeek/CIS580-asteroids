@@ -19,6 +19,7 @@ export default class ScoreBoard {
         ctx.fillText("Score: " + gameState.score, this.x, this.y + 18);
         ctx.fillText("Lives: " + gameState.lives, this.x + 100, this.y + 18);
         ctx.fillText("Level: " + gameState.level, this.x + 200, this.y + 18);
+        ctx.fillText("Asteroids: " + gameState.asteroidSize(), this.x + 300, this.y + 18);
         ctx.restore();
     }
 
@@ -27,7 +28,7 @@ export default class ScoreBoard {
         ctx.save();
         ctx.strokeStyle = 'white';
         ctx.strokeRect(this.x, this.y, this.width, this.height);
-        ctx.fillStyle = "black";
+        ctx.fillStyle = "white";
         ctx.font = '40px sans-serif';
         ctx.fontStyle = 'bold';
         ctx.fillText("Game Over!", this.x + 1 / 4 * this.width, this.y - 240);

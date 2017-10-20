@@ -48,16 +48,31 @@ export default class Asteroid {
             this.y -= this.velocity.y;
     }
 
-    isShot(projectile){
-        return Math.pow(this.x-projectile.x,2) + Math.pow(this.y-projectile.y,2) < this.radius*this.radius;
+    isShot(projectile) {
+        return Math.pow(this.x - projectile.x, 2) + Math.pow(this.y - projectile.y, 2) < this.radius * this.radius;
     }
 
-    split(){
-        if(this.radius>this.game.minAsteroidSize){
-            return null;
-            //return [new Asteroid(this.game,?,this),new Asteroid()];
+    split() {
+        if (this.radius > this.game.minAsteroidSize) {
+            let ratio = Math.random();
+            while (ratio < 0.25) ratio = Math.random();
+            let r1 = Math.floor(ratio) * this.radius;
+            let r2 = Math.floor(1 - ratio) * this.radius;
+            let id1 = this.game.idGenerator.next().value;
+            let id2 = this.game.idGenerator.next().value;
+            let x1 = this.x;
+            let x2 = this.x;
+            let y1 = this.y;
+            let y2 = this.y;
+            let vx1 = this.velocity.x;
+            let vx2 = -this.velocity.x;
+            let vy1 = -this.velocity.y;
+            let vy2 = this.velocity.y;
+            let dir = Math.random() * 2 * Math.PI;
+//TODO
+            this.game.asteroids.set(id1, new Asteroid(this.game, id1, x1, y1, r1, dir, vx1, vy1));
+            this.game.asteroids.set(id2, new Asteroid(this.game, id2, x2, y2, r2, dir, vx2, vy2));
         }
-        return null;
     }
 
     static areColliding(a, b) {

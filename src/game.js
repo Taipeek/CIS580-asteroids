@@ -14,13 +14,20 @@ export default class Game {
         this.canvas.height = this.canvas.gameHeight + 20;
         this.gameLoopSpeed = 20;
         this.minAsteroidSpeed = 1;
-        this.minAsteroidSize = 5;
+        this.minAsteroidSize = 7;
         this.maxAsteroidSpeed = 3;
-        this.maxAsteroidSize = 20;
+        this.maxAsteroidSize = 25;
+        this.asteroidsPerLevel = 10;
         this.gameOverSound = new Audio("gameOver.wav");
         document.body.appendChild(this.canvas);
         this.ctx = this.canvas.getContext('2d');
         this.keyBoard = [];
+        function* idMaker() {
+            let index = 0;
+            while(true)
+                yield index++;
+        }
+        this.idGenerator = idMaker();
 
 
         // Bind class functions
@@ -31,6 +38,11 @@ export default class Game {
         this.render = this.render.bind(this);
         this.gameLoop = this.gameLoop.bind(this);
         this.checkCollisions = this.checkCollisions.bind(this);
+        this.checkGameOver = this.checkGameOver.bind(this);
+        this.checkNextLevel = this.checkNextLevel.bind(this);
+        this.refillAsteroids = this.refillAsteroids.bind(this);
+
+        // key handlers
         window.onkeydown = this.handleKeyDow;
         window.onkeyup = this.handleKeyUp;
 
@@ -48,7 +60,8 @@ export default class Game {
             status: "new",
             score: 0,
             lives: 3,
-            level: 1
+            level: 1,
+            asteroidSize: ()=>{return this.asteroids.size}
         };
         //Create game objects
         this.ship = new Ship(this);
@@ -56,21 +69,7 @@ export default class Game {
         this.projectiles = [];
         this.newProjectiles = [];
         this.asteroids = new Map();
-        this.asteroidsAxisX = [];
-        this.asteroidsAxisY = [];
-        for (let i = 0; i < 25; i++) {
-            let x = Math.random() * this.canvas.gameWidth;
-            let y = Math.random() * this.canvas.gameHeight;
-            let vx = Math.max(Math.random() * this.maxAsteroidSpeed, this.minAsteroidSpeed);
-            let vy = Math.max(Math.random() * this.maxAsteroidSpeed, this.minAsteroidSpeed);
-            let r = Math.floor(Math.max(Math.random() * this.maxAsteroidSize, this.minAsteroidSize));
-            let dir = Math.random() * 2 * Math.PI;
-            this.asteroids.set(i, new Asteroid(this, i, x, y, r, dir, vx, vy));
-            this.asteroidsAxisX.push(this.asteroids[i]);
-            this.asteroidsAxisY.push(this.asteroids[i]);
-
-
-        }
+        this.refillAsteroids();
         // Start the game loop
         this.gameLoopInterval = null;
 
@@ -83,7 +82,33 @@ export default class Game {
                     Asteroid.handleCollision(asteroidA, asteroidB);
                 }
             });
+            if (this.ship.isCrashed(asteroidA)){
+                this.gameState.lives--;
+                this.ship.timeCrashed = Date.now();
+                this.ship.resetPosotion();
+            }
         });
+    }
+
+    refillAsteroids(){
+        let rockCount = this.gameState.level*this.asteroidsPerLevel;
+        let currentCount = this.asteroids.size;
+        if(this.asteroids.size < rockCount){
+            for (let i = 0; i < rockCount-currentCount; i++) {
+                let x = Math.random() * this.canvas.gameWidth;
+                let y = Math.random() * this.canvas.gameHeight;
+                while(this.ship.isNear(x,y)){
+                     x = Math.random() * this.canvas.gameWidth;
+                     y = Math.random() * this.canvas.gameHeight;
+                }
+                let vx = Math.max(Math.random() * this.maxAsteroidSpeed, this.minAsteroidSpeed);
+                let vy = Math.max(Math.random() * this.maxAsteroidSpeed, this.minAsteroidSpeed);
+                let r = Math.floor(Math.max(Math.random() * this.maxAsteroidSize, this.minAsteroidSize));
+                let dir = Math.random() * 2 * Math.PI;
+                let id = this.idGenerator.next().value;
+                this.asteroids.set(id, new Asteroid(this, id, x, y, r, dir, vx, vy));
+            }
+        }
     }
 
     handleKeyDown(event) {
@@ -152,56 +177,53 @@ export default class Game {
         }
     }
 
-    gameOver() {
-        if (--this.gameState.lives >= 1) {
-            this.ship = new Ship(this.canvas.gameWidth, this.canvas.gameHeight);
-            this.gameState.status = "standby";
+    checkGameOver() {
+        if (this.gameState.lives === 0) {
+            this.gameState.status = "over";
             clearInterval(this.gameLoopInterval);
             this.gameLoopInterval = null;
-            return;
+            this.gameOverSound.play();
+            this.scoreBoard.renderGameOver(this.ctx, this.gameState);
         }
-        this.gameState.status = "over";
-        clearInterval(this.gameLoopInterval);
-        this.gameLoopInterval = null;
-        this.gameOverSound.play();
-        this.scoreBoard.renderGameOver(this.ctx, this.gameState);
-
     }
 
 
-    nextLevel() {
-        this.gameState.level++;
-        clearInterval(this.gameLoopInterval);
-        this.gameLoopInterval = setInterval(this.gameLoop, this.gameLoopSpeed);
+    checkNextLevel() {
+        if(this.asteroids.size === 0) {
+            this.gameState.level++;
+            this.refillAsteroids();
+        }
     }
 
 
     update() {
         if (this.gameState.status === "running") {
+            this.checkGameOver();
+            this.checkNextLevel();
             let destroyedAsteroids = [];
             this.newProjectiles = [];
             this.checkCollisions();
             this.projectiles.forEach((projectile) => {
                 let hit = false;
-                this.asteroids.forEach((asteroid) => {
+                for (let asteroid of this.asteroids.values()){
                     if (asteroid.isShot(projectile)) {
                         destroyedAsteroids.push(asteroid.id);
+                        asteroid.split();
+                        this.gameState.score+=50;
                         hit = true;
+                        break;
                     }
-                });
+                }
                 if (!hit) {
                     this.newProjectiles.push(projectile);
-                    console.log(projectile);
                 }
             });
             this.projectiles = this.newProjectiles;
             destroyedAsteroids.forEach((id) => this.asteroids.delete(id));
+            this.newProjectiles = [];
             this.ship.update();
-
             this.asteroids.forEach((asteroid) => asteroid.update());
             this.projectiles.forEach((projectile) => projectile.update());
-
-            this.newProjectiles = [];
             this.projectiles = this.newProjectiles;
 
         }
