@@ -13,9 +13,14 @@ export default class Asteroid {
         this.collisionSound = new Audio("ahit.wav");
         this.isShotSound = new Audio("mhit.wav");
         for(let x = -radius ;x<=radius;x+=4){
-            let y1 = Math.sqrt(radius*radius-x*x);
-            let y2 = -y1;
-            this.points[x] = {y1:y1,y2:y2}
+            let y = Math.sqrt(radius*radius-x*x)+((Math.random()>0.5?1:-1)*this.radius/10);
+            let x2 = x +((Math.random()>0.5?1:-1)*this.radius/10);
+            this.points.push({x:x2,y:y});
+        }
+        for(let x = radius ;x>-radius;x-=5){
+            let y = -Math.sqrt(radius*radius-x*x)+((Math.random()>0.5?1:-1)*this.radius/10);
+            let x2 = x +((Math.random()>0.5?1:-1)*this.radius/10);
+            this.points.push({x:x2,y:y});
         }
 
         this.update = this.update.bind(this);
@@ -32,13 +37,10 @@ export default class Asteroid {
         ctx.translate(this.position.x,this.position.y);
         ctx.beginPath();
         ctx.moveTo(-this.radius,0);
-        this.points.forEach((ys,x)=>{
-            ctx.lineTo(x,ys.y1);
+        this.points.forEach((point)=>{
+            ctx.lineTo(point.x,point.y);
         });
-        ctx.moveTo(-this.radius,0);
-        this.points.forEach((ys,x)=>{
-            ctx.lineTo(x,ys.y2);
-        });
+        ctx.lineTo( this.points[0].x,this.points[0].y);
 
         // ctx.arc(this.position.x, this.position.y, this.radius, 0, 2 * Math.PI, false);
         ctx.fill();
