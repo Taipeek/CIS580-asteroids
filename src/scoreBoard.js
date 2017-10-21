@@ -1,9 +1,10 @@
 export default class ScoreBoard {
-    constructor(x, y, width, height) {
+    constructor(x, y, width, height,game) {
         this.x = x;
         this.y = y;
         this.width = width;
         this.height = height;
+        this.game = game;
         this.render = this.render.bind(this);
         this.renderGameOver = this.renderGameOver.bind(this);
         this.renderPause = this.renderPause.bind(this);
@@ -30,9 +31,12 @@ export default class ScoreBoard {
     renderFirstGame(ctx, gameState) {
         if (gameState.status !== "new") return;
         ctx.save();
-        ctx.strokeStyle = 'brown';
-        ctx.strokeRect(this.x, this.y, this.width, this.height);
-        ctx.fillStyle = "brown";
+        ctx.strokeStyle = 'white';
+        ctx.globalAlpha = 0.8;
+        ctx.fillStyle = "brgba(0, 0, 0, 0.76)";
+        ctx.fillRect(0, 0, this.game.canvas.width, this.game.canvas.height);
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = "white";
         ctx.font = '40px sans-serif';
         ctx.fontStyle = 'bold';
         ctx.fillText("Welcome to asteroids", this.x + 1 / 10 * this.width, this.y - 500);
@@ -48,9 +52,12 @@ export default class ScoreBoard {
     renderGameOver(ctx, gameState) {
         if (gameState.status !== "over") return;
         ctx.save();
-        ctx.strokeStyle = 'brown';
-        ctx.strokeRect(this.x, this.y, this.width, this.height);
-        ctx.fillStyle = "brown";
+        ctx.strokeStyle = 'white';
+        ctx.globalAlpha = 0.8;
+        ctx.fillStyle = "brgba(0, 0, 0, 0.76)";
+        ctx.fillRect(0, 0, this.game.canvas.width, this.game.canvas.height);
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = "white";
         ctx.font = '40px sans-serif';
         ctx.fontStyle = 'bold';
         ctx.fillText("Game Over!", this.x + 1 / 10 * this.width, this.y - 500);
@@ -66,9 +73,12 @@ export default class ScoreBoard {
     renderPause(ctx, gameState) {
         if (gameState.status !== "paused") return;
         ctx.save();
-        ctx.strokeStyle = 'brown';
-        ctx.strokeRect(this.x, this.y, this.width, this.height);
-        ctx.fillStyle = "brown";
+        ctx.strokeStyle = 'white';
+        ctx.globalAlpha = 0.8;
+        ctx.fillStyle = "brgba(0, 0, 0, 0.76)";
+        ctx.fillRect(0, 0, this.game.canvas.width, this.game.canvas.height);
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = "white";
         ctx.font = '40px sans-serif';
         ctx.fontStyle = 'bold';
         ctx.fillText("Paused", this.x + 1 / 10 * this.width, this.y - 500);

@@ -65,7 +65,7 @@ export default class Game {
         };
         //Create game objects
         this.ship = new Ship(this);
-        this.scoreBoard = new ScoreBoard(0, this.canvas.gameHeight, this.canvas.width, this.canvas.height - this.canvas.gameHeight);
+        this.scoreBoard = new ScoreBoard(0, this.canvas.gameHeight, this.canvas.width, this.canvas.height - this.canvas.gameHeight,this);
         this.projectiles = [];
         this.newProjectiles = [];
         this.asteroids = new Map();
@@ -280,7 +280,7 @@ export default class Game {
         }
     }
     static squareVector(a) {
-        return (a.x*a.x+a.y*a.y);
+        return Math.pow(a.x*a.x+a.y*a.y,2);
     }
 
     static magnitudeVector(vector) {

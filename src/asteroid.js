@@ -101,7 +101,7 @@ export default class Asteroid {
 
     static areColliding(a, b) {
         if( Math.pow(a.position.x - b.position.x, 2) + Math.pow(a.position.y - b.position.y, 2) < Math.pow(a.radius + b.radius, 2)){
-            a.collisionSound.play();
+            // a.collisionSound.play();
             return true;
         }
         return false;
@@ -127,9 +127,16 @@ export default class Asteroid {
         let c1 = Game.substractVectors(a.position,b.position);
         let c2 = Game.substractVectors(b.position,a.position);
 
-        let vaNew = va - (2*b.m/(a.m+b.m))*((vamvb.x*c1.x+vamvb.y*c1.y)/Game.squareVector(c1))*(a.position.x-b.position.x);
+        let vaNewx = a.velocity.x - (2*b.m/(a.m+b.m))*((vamvb.x*c1.x+vamvb.y*c1.y)/Game.squareVector(c1))*(c1.x-c2.x);
+        let vaNewy = a.velocity.y - (2*b.m/(a.m+b.m))*((vamvb.x*c1.x+vamvb.y*c1.y)/Game.squareVector(c1))*(c1.y-c2.y);
+        let vbNewx = b.velocity.x - (2*a.m/(a.m+b.m))*((vbmva.x*c2.x+vbmva.y*c2.y)/Game.squareVector(c2))*(c2.x-c1.x);
+        let vbNewy = b.velocity.y - (2*a.m/(a.m+b.m))*((vbmva.x*c2.x+vbmva.y*c2.y)/Game.squareVector(c2))*(c2.y-c1.y);
 
-        let newA = Game.rotateVector(a.velocity, collisionAngle);
+        a.velocity = {x:vaNewx,y:vaNewy};
+        b.velocity = {x:vbNewx,y:vbNewy};
+        console.log(a.velocity,b.velocity);
+
+      /*  let newA = Game.rotateVector(a.velocity, collisionAngle);
         let newB = Game.rotateVector(b.velocity, collisionAngle);
         let tmp = newA.x;
         newA.x = newB.x;
@@ -137,25 +144,25 @@ export default class Asteroid {
         newA = Game.rotateVector(newA, -collisionAngle);
         newB = Game.rotateVector(newB, -collisionAngle);
         a.velocity = newA;
-        b.velocity = newB;
+        b.velocity = newB;*/
 
-        // let v1 = Game.magnitudeVector(a.velocity);
-        // let v2 = Game.magnitudeVector(b.velocity);
-        //
-        // a.velocity.x = (v1*Math.cos(a.direction-collisionAngle)*(a.m-b.m)
-        //     +(2*b.m*v2*Math.cos(b.direction-collisionAngle)))*Math.cos(collisionAngle)/(a.m+b.m)
-        //     +v1*Math.sin(a.direction-collisionAngle)*Math.cos(collisionAngle+Math.PI/2);
-        //
-        // a.velocity.y = (v1*Math.cos(a.direction-collisionAngle)*(a.m-b.m)
-        //     +(2*b.m*v2*Math.cos(b.direction-collisionAngle)))*Math.sin(collisionAngle)/(a.m+b.m)
-        //     +v1*Math.sin(a.direction-collisionAngle)*Math.sin(collisionAngle+Math.PI/2);
-        //
-        // b.velocity.x = (v2*Math.cos(b.direction-collisionAngle)*(b.m-a.m)
-        //     +(2*a.m*v1*Math.cos(a.direction-collisionAngle)))*Math.cos(collisionAngle)/(a.m+b.m)
-        //     +v2*Math.sin(b.direction-collisionAngle)*Math.cos(collisionAngle+Math.PI/2);
-        //
-        // b.velocity.y = (v2*Math.cos(b.direction-collisionAngle)*(b.m-a.m)
-        //     +(2*a.m*v1*Math.cos(a.direction-collisionAngle)))*Math.sin(collisionAngle)/(a.m+b.m)
-        //     +v2*Math.sin(b.direction-collisionAngle)*Math.sin(collisionAngle+Math.PI/2);
+        /*let v1 = Game.magnitudeVector(a.velocity);
+        let v2 = Game.magnitudeVector(b.velocity);
+
+        a.velocity.x = (v1*Math.cos(a.direction-collisionAngle)*(a.m-b.m)
+            +(2*b.m*v2*Math.cos(b.direction-collisionAngle)))*Math.cos(collisionAngle)/(a.m+b.m)
+            +v1*Math.sin(a.direction-collisionAngle)*Math.cos(collisionAngle+Math.PI/2);
+
+        a.velocity.y = (v1*Math.cos(a.direction-collisionAngle)*(a.m-b.m)
+            +(2*b.m*v2*Math.cos(b.direction-collisionAngle)))*Math.sin(collisionAngle)/(a.m+b.m)
+            +v1*Math.sin(a.direction-collisionAngle)*Math.sin(collisionAngle+Math.PI/2);
+
+        b.velocity.x = (v2*Math.cos(b.direction-collisionAngle)*(b.m-a.m)
+            +(2*a.m*v1*Math.cos(a.direction-collisionAngle)))*Math.cos(collisionAngle)/(a.m+b.m)
+            +v2*Math.sin(b.direction-collisionAngle)*Math.cos(collisionAngle+Math.PI/2);
+
+        b.velocity.y = (v2*Math.cos(b.direction-collisionAngle)*(b.m-a.m)
+            +(2*a.m*v1*Math.cos(a.direction-collisionAngle)))*Math.sin(collisionAngle)/(a.m+b.m)
+            +v2*Math.sin(b.direction-collisionAngle)*Math.sin(collisionAngle+Math.PI/2);*/
     }
 }
