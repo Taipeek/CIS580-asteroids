@@ -11,7 +11,7 @@ export default class Ship {
         this.maxSpeed = 7;
         this.lastShot = Date.now();
         this.shotInterval = 150;
-        this.directionShift = Math.PI / 24;
+        this.directionShift = Math.PI / 32;
         this.width = 4;
         this.length = 6;
         this.invulnerability = 3000;
@@ -50,7 +50,7 @@ export default class Ship {
     }
 
     isShot(projectile) {
-        if (Math.pow(this.position.x - projectile.x, 2) + Math.pow(this.position.y - projectile.y, 2) < this.width * this.width) {
+        if (Math.pow(this.position.x - projectile.x, 2) + Math.pow(this.position.y - projectile.y, 2) < this.width * this.length) {
             this.crashSound.play();
             return true;
         }
@@ -161,6 +161,22 @@ export default class Ship {
         ctx.closePath();
         ctx.stroke();
         ctx.fill();
+        if(this.thrusters){
+            ctx.strokeStyle = "orange";
+            ctx.fillStyle = "orange";
+            if (this.timeInvulnerable !== 0 && (Date.now() - this.timeInvulnerable) % 300 > 150) {
+                ctx.strokeStyle = "black";
+                ctx.fillStyle = "black";
+            }
+            ctx.beginPath();
+            ctx.moveTo(0, this.length+2);
+            ctx.lineTo(2, this.length+4);
+            ctx.lineTo(-2, this.length+4);
+            ctx.closePath();
+            ctx.stroke();
+            ctx.fill();
+
+        }
         ctx.restore();
     }
 }

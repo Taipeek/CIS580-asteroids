@@ -238,7 +238,7 @@ export default class Game {
                     this.gameState.score += 200;
                 }
 
-                if (!hit && this.ship.isShot(projectile)) {
+                if (!hit && projectile.shotByUfo && this.ship.isShot(projectile)) {
                     this.gameState.lives--;
                     this.ship.timeInvulnerable = Date.now();
                     this.ship.resetPosition();

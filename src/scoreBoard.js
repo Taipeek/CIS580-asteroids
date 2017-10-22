@@ -67,7 +67,7 @@ export default class ScoreBoard {
         ctx.fillText("Use 'x' key to warp your ship to random place", this.x + 1 / 10 * this.width, this.y - 370);
         ctx.fillText("Press 'p' key to pause the game", this.x + 1 / 10 * this.width, this.y - 340);
         ctx.font = '40px sans-serif';
-        ctx.fillText("Press space to resume the game", this.x + 1 / 10 * this.width, this.y - 290);
+        ctx.fillText("Press space to start new game", this.x + 1 / 10 * this.width, this.y - 290);
         ctx.restore();
     }
     renderPause(ctx, gameState) {
