@@ -101,7 +101,7 @@ export default class Asteroid {
 
     static areColliding(a, b) {
         if (Math.pow(a.position.x - b.position.x, 2) + Math.pow(a.position.y - b.position.y, 2) < Math.pow(a.radius + b.radius, 2)) {
-            // a.collisionSound.play();
+            a.collisionSound.play();
             return true;
         }
         return false;
