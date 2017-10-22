@@ -5,22 +5,22 @@ export default class Asteroid {
         this.id = id;
         this.game = game;
         this.direction = direction;
-        this.position = {x:x,y:y};
+        this.position = {x: x, y: y};
         this.velocity = {x: vx, y: vy};
         this.radius = radius;
-        this.m = Math.PI*Math.PI*this.radius;
+        this.m = Math.PI * this.radius * this.radius;
         this.points = [];
         this.collisionSound = new Audio("ahit.wav");
         this.isShotSound = new Audio("mhit.wav");
-        for(let x = -radius ;x<=radius;x+=4){
-            let y = Math.sqrt(radius*radius-x*x)+((Math.random()>0.5?1:-1)*this.radius/10);
-            let x2 = x +((Math.random()>0.5?1:-1)*this.radius/10);
-            this.points.push({x:x2,y:y});
+        for (let x = -radius; x <= radius; x += 4) {
+            let y = Math.sqrt(radius * radius - x * x) + ((Math.random() > 0.5 ? 1 : -1) * this.radius / 10);
+            let x2 = x + ((Math.random() > 0.5 ? 1 : -1) * this.radius / 10);
+            this.points.push({x: x2, y: y});
         }
-        for(let x = radius ;x>-radius;x-=5){
-            let y = -Math.sqrt(radius*radius-x*x)+((Math.random()>0.5?1:-1)*this.radius/10);
-            let x2 = x +((Math.random()>0.5?1:-1)*this.radius/10);
-            this.points.push({x:x2,y:y});
+        for (let x = radius; x > -radius; x -= 5) {
+            let y = -Math.sqrt(radius * radius - x * x) + ((Math.random() > 0.5 ? 1 : -1) * this.radius / 10);
+            let x2 = x + ((Math.random() > 0.5 ? 1 : -1) * this.radius / 10);
+            this.points.push({x: x2, y: y});
         }
 
         this.update = this.update.bind(this);
@@ -34,13 +34,13 @@ export default class Asteroid {
         ctx.save();
         ctx.strokeStyle = "white";
         ctx.fillStyle = "white";
-        ctx.translate(this.position.x,this.position.y);
+        ctx.translate(this.position.x, this.position.y);
         ctx.beginPath();
-        ctx.moveTo(-this.radius,0);
-        this.points.forEach((point)=>{
-            ctx.lineTo(point.x,point.y);
+        ctx.moveTo(-this.radius, 0);
+        this.points.forEach((point) => {
+            ctx.lineTo(point.x, point.y);
         });
-        ctx.lineTo( this.points[0].x,this.points[0].y);
+        ctx.lineTo(this.points[0].x, this.points[0].y);
 
         // ctx.arc(this.position.x, this.position.y, this.radius, 0, 2 * Math.PI, false);
         ctx.fill();
@@ -68,7 +68,7 @@ export default class Asteroid {
     }
 
     isShot(projectile) {
-        if(Math.pow(this.position.x - projectile.x, 2) + Math.pow(this.position.y - projectile.y, 2) < this.radius * this.radius){
+        if (Math.pow(this.position.x - projectile.x, 2) + Math.pow(this.position.y - projectile.y, 2) < this.radius * this.radius) {
             this.isShotSound.play();
             return true;
         }
@@ -100,7 +100,7 @@ export default class Asteroid {
     }
 
     static areColliding(a, b) {
-        if( Math.pow(a.position.x - b.position.x, 2) + Math.pow(a.position.y - b.position.y, 2) < Math.pow(a.radius + b.radius, 2)){
+        if (Math.pow(a.position.x - b.position.x, 2) + Math.pow(a.position.y - b.position.y, 2) < Math.pow(a.radius + b.radius, 2)) {
             // a.collisionSound.play();
             return true;
         }
@@ -120,23 +120,7 @@ export default class Asteroid {
         b.position.x -= collisionVector.x * overlap / 2;
         b.position.y -= collisionVector.y * overlap / 2;
 
-        let va = Game.magnitudeVector(a.velocity);
-        let vb = Game.magnitudeVector(b.velocity);
-        let vamvb = Game.substractVectors(a.velocity,b.velocity);
-        let vbmva = Game.substractVectors(a.velocity,b.velocity);
-        let c1 = Game.substractVectors(a.position,b.position);
-        let c2 = Game.substractVectors(b.position,a.position);
-
-        let vaNewx = a.velocity.x - (2*b.m/(a.m+b.m))*((vamvb.x*c1.x+vamvb.y*c1.y)/Game.squareVector(c1))*(c1.x-c2.x);
-        let vaNewy = a.velocity.y - (2*b.m/(a.m+b.m))*((vamvb.x*c1.x+vamvb.y*c1.y)/Game.squareVector(c1))*(c1.y-c2.y);
-        let vbNewx = b.velocity.x - (2*a.m/(a.m+b.m))*((vbmva.x*c2.x+vbmva.y*c2.y)/Game.squareVector(c2))*(c2.x-c1.x);
-        let vbNewy = b.velocity.y - (2*a.m/(a.m+b.m))*((vbmva.x*c2.x+vbmva.y*c2.y)/Game.squareVector(c2))*(c2.y-c1.y);
-
-        a.velocity = {x:vaNewx,y:vaNewy};
-        b.velocity = {x:vbNewx,y:vbNewy};
-        console.log(a.velocity,b.velocity);
-
-      /*  let newA = Game.rotateVector(a.velocity, collisionAngle);
+        let newA = Game.rotateVector(a.velocity, collisionAngle); //working so far
         let newB = Game.rotateVector(b.velocity, collisionAngle);
         let tmp = newA.x;
         newA.x = newB.x;
@@ -144,7 +128,52 @@ export default class Asteroid {
         newA = Game.rotateVector(newA, -collisionAngle);
         newB = Game.rotateVector(newB, -collisionAngle);
         a.velocity = newA;
-        b.velocity = newB;*/
+        b.velocity = newB;
+
+       /* let va = Game.magnitudeVector(a.velocity);
+        let vb = Game.magnitudeVector(b.velocity);
+        let vamvb = Game.substractVectors(a.velocity, b.velocity);
+        let vbmva = Game.substractVectors(a.velocity, b.velocity);
+        let c1 = Game.substractVectors(a.position, b.position);
+        let c2 = Game.substractVectors(b.position, a.position);
+
+        let vaNewx = a.velocity.x - (2 * b.m / (a.m + b.m)) * ((vamvb.x * c1.x + vamvb.y * c1.y) / Game.squareVector(c1)) * (c1.x);
+        let vaNewy = a.velocity.y - (2 * b.m / (a.m + b.m)) * ((vamvb.x * c1.x + vamvb.y * c1.y) / Game.squareVector(c1)) * (c1.y);
+        let vbNewx = b.velocity.x - (2 * a.m / (a.m + b.m)) * ((vbmva.x * c2.x + vbmva.y * c2.y) / Game.squareVector(c2)) * (c2.x);
+        let vbNewy = b.velocity.y - (2 * a.m / (a.m + b.m)) * ((vbmva.x * c2.x + vbmva.y * c2.y) / Game.squareVector(c2)) * (c2.y);
+
+
+        let aold = a.velocity;
+        let bold = b.velocity;
+        a.velocity = {x: vaNewx, y: vaNewy};
+        b.velocity = {x: vbNewx, y: vbNewy};
+        if (a.m * Game.magnitudeVector(a.velocity) + b.m * Game.magnitudeVector(b.velocity) === a.m * Game.magnitudeVector(aold) + b.m * Game.magnitudeVector(bold)) {
+            console.log(true);
+        }
+        console.log(a.velocity, b.velocity);*/
+
+
+        /*let const1 =  2*b.m/(a.m+b.m)*((a.velocity.x-b.velocity.x)*(c1.x)+(a.velocity.y-b.velocity.y)*(c1.y));
+
+        let tmp_a = (c1.x);
+        let tmp_b = (c1.x);
+
+        const1/=tmp_a*tmp_a+tmp_b*tmp_b;
+
+        a.velocity.x = a.velocity.x-const1*(c1.x);
+        a.velocity.y = a.velocity.y-const1*(c2.x);
+
+        let const2 =  2*a.m/(a.m+b.m)*((b.velocity.x-a.velocity.x)*(c2.x)+(b.velocity.y-a.velocity.y)*(c2.y));
+
+        tmp_a = (c1.x);
+        tmp_b = (c1.y);
+
+        const2/=tmp_b*tmp_b+tmp_a*tmp_a;
+
+        b.velocity.x = b.velocity.x-const1*(c2.x);
+        b.velocity.y = b.velocity.y-const1*(c2.y);*/
+
+
 
         /*let v1 = Game.magnitudeVector(a.velocity);
         let v2 = Game.magnitudeVector(b.velocity);

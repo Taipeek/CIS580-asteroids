@@ -1,10 +1,11 @@
 export default class Projectile {
-    constructor(game, x, y, direction, initialVelocity) {
+    constructor(game, x, y, direction, initialVelocity, shotByUfo) {
         this.x = x;
         this.y = y;
         this.direction = direction;
         this.game = game;
         this.speed = 10;
+        this.shotByUfo = shotByUfo;
         this.initialX = initialVelocity.x;
         this.initialY = initialVelocity.y;
         this.update = this.update.bind(this);
@@ -14,8 +15,12 @@ export default class Projectile {
 
     render(ctx) {
         ctx.save();
-        ctx.strokeStyle = "white";
-        ctx.fillStyle = "white";
+        ctx.strokeStyle = "blue";
+        ctx.fillStyle = "blue";
+        if (this.shotByUfo) {
+            ctx.strokeStyle = "green";
+            ctx.fillStyle = "green";
+        }
         ctx.beginPath();
         ctx.translate(this.x, this.y);
         ctx.rotate(-this.direction + Math.PI);

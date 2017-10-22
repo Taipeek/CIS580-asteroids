@@ -25,9 +25,10 @@ export default class Ship {
         this.steer = this.steer.bind(this);
         this.shoot = this.shoot.bind(this);
         this.isCrashed = this.isCrashed.bind(this);
-        this.resetPosotion = this.resetPosotion.bind(this);
+        this.resetPosition = this.resetPosition.bind(this);
         this.isNear = this.isNear.bind(this);
         this.warp = this.warp.bind(this);
+        this.isShot = this.isShot.bind(this);
 
     }
 
@@ -48,6 +49,14 @@ export default class Ship {
         return false;
     }
 
+    isShot(projectile) {
+        if (Math.pow(this.position.x - projectile.x, 2) + Math.pow(this.position.y - projectile.y, 2) < this.width * this.width) {
+            this.crashSound.play();
+            return true;
+        }
+        return false;
+    }
+
     isNear(x, y) {
         return Math.pow(this.position.x - x, 2) + Math.pow(this.position.y - this.length - y, 2) < this.game.maxAsteroidSize * this.game.maxAsteroidSize;
     }
@@ -55,7 +64,7 @@ export default class Ship {
     shoot() {
         let now = Date.now();
         if (now - this.lastShot >= this.shotInterval) {
-            this.game.projectiles.push(new Projectile(this.game, this.position.x, this.position.y, this.position.direction, this.velocity));
+            this.game.projectiles.push(new Projectile(this.game, this.position.x, this.position.y, this.position.direction, this.velocity, false));
             this.lastShot = now;
             this.shootSound.play();
         }
@@ -83,7 +92,7 @@ export default class Ship {
         this.position.direction += beta;
     }
 
-    resetPosotion() {
+    resetPosition() {
         this.position = {x: this.canvas.width / 2, y: this.canvas.height / 2, direction: Math.PI / 2};
         this.velocity = {x: 0, y: 0};
     }
@@ -103,8 +112,8 @@ export default class Ship {
             this.velocity.x += Math.cos(this.position.direction) * this.thrustersForce;
             this.velocity.y += Math.sin(this.position.direction) * this.thrustersForce;
         } else {
-            this.velocity.x *= 0.99;
-            this.velocity.y *= 0.99;
+            this.velocity.x *= 0.95;
+            this.velocity.y *= 0.95;
         }
         let xx = Math.pow(this.velocity.x, 2);
         let yy = Math.pow(this.velocity.y, 2);

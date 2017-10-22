@@ -1,6 +1,7 @@
 import Ship from "./ship";
 import ScoreBoard from "./scoreBoard";
 import Asteroid from "./asteroid";
+import Ufo from "./ufo";
 
 export default class Game {
     constructor() {
@@ -22,11 +23,15 @@ export default class Game {
         document.body.appendChild(this.canvas);
         this.ctx = this.canvas.getContext('2d');
         this.keyBoard = [];
+        this.lastUfo = 0;
+        this.ufoCooldown = 1000;
+
         function* idMaker() {
             let index = 0;
-            while(true)
+            while (true)
                 yield index++;
         }
+
         this.idGenerator = idMaker();
 
 
@@ -41,6 +46,7 @@ export default class Game {
         this.checkGameOver = this.checkGameOver.bind(this);
         this.checkNextLevel = this.checkNextLevel.bind(this);
         this.refillAsteroids = this.refillAsteroids.bind(this);
+        this.spawnUfo = this.spawnUfo.bind(this);
 
         // key handlers
         window.onkeydown = this.handleKeyDow;
@@ -60,12 +66,15 @@ export default class Game {
             score: 0,
             lives: 3,
             level: 1,
-            warpsLeft:5,
-            asteroidSize: ()=>{return this.asteroids.size}
+            warpsLeft: 5,
+            asteroidSize: () => {
+                return this.asteroids.size
+            }
         };
         //Create game objects
         this.ship = new Ship(this);
-        this.scoreBoard = new ScoreBoard(0, this.canvas.gameHeight, this.canvas.width, this.canvas.height - this.canvas.gameHeight,this);
+        this.ufo = null;
+        this.scoreBoard = new ScoreBoard(0, this.canvas.gameHeight, this.canvas.width, this.canvas.height - this.canvas.gameHeight, this);
         this.projectiles = [];
         this.newProjectiles = [];
         this.asteroids = new Map();
@@ -81,27 +90,27 @@ export default class Game {
                     Asteroid.handleCollision(asteroidA, asteroidB);
                 }
             });
-            if (this.ship.isCrashed(asteroidA)){
+            if (this.ship.isCrashed(asteroidA)) {
                 this.gameState.lives--;
                 this.ship.timeInvulnerable = Date.now();
-                this.ship.resetPosotion();
+                this.ship.resetPosition();
             }
         });
     }
 
-    refillAsteroids(){
-        let rockCount = this.gameState.level*this.asteroidsPerLevel;
+    refillAsteroids() {
+        let rockCount = this.gameState.level * this.asteroidsPerLevel;
         let currentCount = this.asteroids.size;
-        if(this.asteroids.size < rockCount){
-            for (let i = 0; i < rockCount-currentCount; i++) {
+        if (this.asteroids.size < rockCount) {
+            for (let i = 0; i < rockCount - currentCount; i++) {
                 let x = Math.random() * this.canvas.gameWidth;
                 let y = Math.random() * this.canvas.gameHeight;
-                while(this.ship.isNear(x,y)){
-                     x = Math.random() * this.canvas.gameWidth;
-                     y = Math.random() * this.canvas.gameHeight;
+                while (this.ship.isNear(x, y)) {
+                    x = Math.random() * this.canvas.gameWidth;
+                    y = Math.random() * this.canvas.gameHeight;
                 }
-                let vx = Math.max(Math.random() * this.maxAsteroidSpeed, this.minAsteroidSpeed);
-                let vy = Math.max(Math.random() * this.maxAsteroidSpeed, this.minAsteroidSpeed);
+                let vx = (Math.random() > 0.5 ? 1 : -1) * Math.max(Math.random() * this.maxAsteroidSpeed, this.minAsteroidSpeed);
+                let vy = (Math.random() > 0.5 ? 1 : -1) * Math.max(Math.random() * this.maxAsteroidSpeed, this.minAsteroidSpeed);
                 let r = Math.floor(Math.max(Math.random() * this.maxAsteroidSize, this.minAsteroidSize));
                 let dir = Math.random() * 2 * Math.PI;
                 let id = this.idGenerator.next().value;
@@ -134,8 +143,8 @@ export default class Game {
             this.render();
             return;
         }
-        if (event.key === "x" && this.gameState.status==="running") {
-           this.ship.warp();
+        if (event.key === "x" && this.gameState.status === "running") {
+            this.ship.warp();
             return;
         }
         switch (event.key) {
@@ -194,7 +203,7 @@ export default class Game {
 
 
     checkNextLevel() {
-        if(this.asteroids.size === 0) {
+        if (this.asteroids.size === 0) {
             this.gameState.level++;
             this.refillAsteroids();
         }
@@ -208,17 +217,34 @@ export default class Game {
             let destroyedAsteroids = [];
             this.newProjectiles = [];
             this.checkCollisions();
+            this.spawnUfo();
             this.projectiles.forEach((projectile) => {
                 let hit = false;
-                for (let asteroid of this.asteroids.values()){
+
+                for (let asteroid of this.asteroids.values()) {
                     if (asteroid.isShot(projectile)) {
                         destroyedAsteroids.push(asteroid.id);
                         asteroid.split();
-                        this.gameState.score+=50;
+                        if (!projectile.shotByUfo)
+                            this.gameState.score += 50;
                         hit = true;
                         break;
                     }
                 }
+
+                if (!hit && !projectile.shotByUfo && this.ufo && this.ufo.isShot(projectile)) {
+                    this.ufo = null;
+                    hit = true;
+                    this.gameState.score += 200;
+                }
+
+                if (!hit && this.ship.isShot(projectile)) {
+                    this.gameState.lives--;
+                    this.ship.timeInvulnerable = Date.now();
+                    this.ship.resetPosition();
+                    hit = true;
+                }
+
                 if (!hit) {
                     this.newProjectiles.push(projectile);
                 }
@@ -227,10 +253,30 @@ export default class Game {
             destroyedAsteroids.forEach((id) => this.asteroids.delete(id));
             this.newProjectiles = [];
             this.ship.update();
+            if (this.ufo) this.ufo.update();
             this.asteroids.forEach((asteroid) => asteroid.update());
             this.projectiles.forEach((projectile) => projectile.update());
             this.projectiles = this.newProjectiles;
 
+        }
+    }
+
+    spawnUfo() {
+
+        if (Math.floor(this.gameState.score / this.ufoCooldown) > this.lastUfo && this.ufo === null) {
+            this.lastUfo = Math.floor(this.gameState.score / this.ufoCooldown);
+            let x = Math.random() * this.canvas.gameWidth;
+            let y = Math.random() * this.canvas.gameHeight;
+            while (this.ship.isNear(x, y)) {
+                x = Math.random() * this.canvas.gameWidth;
+                y = Math.random() * this.canvas.gameHeight;
+            }
+            let vx = (Math.random() > 0.5 ? 1 : -1) * Math.max(Math.random() * this.maxAsteroidSpeed, this.minAsteroidSpeed);
+            let vy = (Math.random() > 0.5 ? 1 : -1) * Math.max(Math.random() * this.maxAsteroidSpeed, this.minAsteroidSpeed);
+            let id = this.idGenerator.next().value;
+
+
+            this.ufo = new Ufo(this, id, x, y, vx, vy)
         }
     }
 
@@ -242,6 +288,7 @@ export default class Game {
         this.ship.render(this.ctx);
         this.projectiles.forEach((item) => item.render(this.ctx));
         this.asteroids.forEach((item) => item.render(this.ctx));
+        if (this.ufo) this.ufo.render(this.ctx);
         this.scoreBoard.render(this.ctx, this.gameState);
         this.scoreBoard.renderGameOver(this.ctx, this.gameState);
         this.scoreBoard.renderPause(this.ctx, this.gameState);
@@ -273,15 +320,18 @@ export default class Game {
             y: vector.y / norm
         }
     }
-    static substractVectors(a,b) {
+
+    static substractVectors(a, b) {
         return {
             x: a.x - b.x,
             y: a.y - b.y
         }
     }
+
     static squareVector(a) {
-        return Math.pow(a.x*a.x+a.y*a.y,2);
+        return a.x * a.x + a.y * a.y;
     }
+
 
     static magnitudeVector(vector) {
         return Math.sqrt(vector.x * vector.x + vector.y * vector.y);
